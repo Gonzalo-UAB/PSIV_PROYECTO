@@ -1,4 +1,6 @@
-matplotlib
-numpy
+matplotlib==3.8.4
+numpy==1.26.4
 opencv-python
 tensorflow
+six
+#protobuf<7,>=3.20
