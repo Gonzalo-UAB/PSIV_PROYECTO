@@ -1,11 +1,48 @@
 #DEEP LEARNING PARA AMERICAN SIGN LANGUAGE
 import tensorflow as tf
 from tensorflow.keras import layers, models
-
+import numpy as np
+import time
 # 1. Cargar y preparar los datos de ejemplo
 print("Cargando el dataset Fashion MNIST...")
-fashion_mnist = tf.keras.datasets.fashion_mnist
-(train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
+# fashion_mnist = tf.keras.datasets.fashion_mnist
+# (train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
+
+ini = time.perf_counter()
+train_labels = np.zeros(27455, dtype=np.int64)
+train_images = np.zeros((27455, 28, 28), dtype=np.float32)
+
+with open(r"PSIV_PROYECTO\data\dataset_mnist_ASL\sign_mnist_train.csv") as nH:
+    nH.readline()
+
+    for i, line in enumerate(nH):
+        linia = line.strip().split(",")
+
+        train_labels[i] = int(linia[0])
+
+        pixels = np.array(linia[1:], dtype=np.float32)
+        train_images[i] = pixels.reshape(28, 28)
+
+test_labels = np.zeros(7172, dtype=np.int64)
+test_images = np.zeros((7172, 28, 28), dtype=np.float32)
+
+with open(r"PSIV_PROYECTO\data\dataset_mnist_ASL\sign_mnist_test.csv") as nH:
+    nH.readline()
+
+    for i, line in enumerate(nH):
+        linia = line.strip().split(",")
+
+        test_labels[i] = int(linia[0])
+
+        pixels = np.array(linia[1:], dtype=np.float32)
+        test_images[i] = pixels.reshape(28, 28)
+                
+final = time.perf_counter()
+
+
+print(f"Final {final-ini}secs")
+print(train_images[689])
+print(test_images[639])
 
 # Normalizar los valores de los píxeles para que estén entre 0 y 1 (facilita el entrenamiento)
 train_images, test_images = train_images / 255.0, test_images / 255.0
@@ -36,7 +73,7 @@ model = models.Sequential([
     layers.Dense(64, activation='relu'),
     
     # Capa de salida: 10 neuronas porque hay 10 categorías de ropa, usa softmax para dar probabilidades
-    layers.Dense(10, activation='softmax') 
+    layers.Dense(25, activation='softmax') 
 ])
 
 # 3. Compilar el modelo
@@ -52,5 +89,7 @@ model.summary()
 print("Iniciando el entrenamiento...")
 # Entrenamos durante 5 "epochs" (pasadas completas por todos los datos)
 model.fit(train_images, train_labels, epochs=5, validation_data=(test_images, test_labels))
+
+model.
 
 print("¡Entrenamiento completado!")
