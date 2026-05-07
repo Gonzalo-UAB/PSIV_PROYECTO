@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import cv2
 
 IMG_PATH_BACKGROUND = 'data/images/background.png'
-IMG_PATH_THUMB = 'data/images/thumb.png'
+IMG_PATH_THUMB = 'data/images/thumb_up.png'
 img_bg = cv2.imread(IMG_PATH_BACKGROUND)
 img_thumb = cv2.imread(IMG_PATH_THUMB)
 
