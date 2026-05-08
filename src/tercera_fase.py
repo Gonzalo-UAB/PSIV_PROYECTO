@@ -71,7 +71,7 @@ model = models.Sequential([
     
     # Capa densa "Fully Connected" para procesar todo lo aprendido
     layers.Dense(64, activation='relu'),
-    
+    # layers.Dropout(0.5),
     # Capa de salida: 10 neuronas porque hay 10 categorías de ropa, usa softmax para dar probabilidades
     layers.Dense(25, activation='softmax') 
 ])
@@ -88,8 +88,9 @@ model.summary()
 # 4. Entrenar el modelo
 print("Iniciando el entrenamiento...")
 # Entrenamos durante 5 "epochs" (pasadas completas por todos los datos)
-model.fit(train_images, train_labels, epochs=5, validation_data=(test_images, test_labels))
+model.fit(train_images, train_labels, epochs=10, validation_data=(test_images, test_labels))
 
-model.
+model.save("Cuarta_version.keras")
+
 
 print("¡Entrenamiento completado!")
