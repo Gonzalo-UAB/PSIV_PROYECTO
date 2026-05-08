@@ -1,6 +1,6 @@
 #DEEP LEARNING PARA AMERICAN SIGN LANGUAGE
 import tensorflow as tf
-from tensorflow.keras import layers, models
+from tensorflow.python.keras import layers, models
 import numpy as np
 import time
 # 1. Cargar y preparar los datos de ejemplo
