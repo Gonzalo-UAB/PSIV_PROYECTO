@@ -3,6 +3,14 @@ import tensorflow as tf
 from tensorflow.keras import layers, models
 import numpy as np
 import time
+
+
+datagen = tf.keras.preprocessing.image.ImageDataGenerator(
+    rotation_range=10,   # Rota la imagen un poco
+    zoom_range=0.1,      # Zoom aleatorio
+    width_shift_range=0.1, 
+    height_shift_range=0.1
+)
 # 1. Cargar y preparar los datos de ejemplo
 print("Cargando el dataset Fashion MNIST...")
 # fashion_mnist = tf.keras.datasets.fashion_mnist
@@ -67,11 +75,17 @@ model = models.Sequential([
     layers.MaxPooling2D((2, 2)),
     
     # Aplanar el mapa de características 2D a un vector 1D
-    layers.Flatten(),
     
     # Capa densa "Fully Connected" para procesar todo lo aprendido
-    layers.Dense(64, activation='relu'),
-    # layers.Dropout(0.5),
+    layers.Dense(128, activation='relu'),
+
+    layers.Flatten(),
+
+    layers.Dense(256, activation='relu'),
+    layers.Dropout(0.3), # Bajamos un poco de 0.5 a 0.3 para no castigar tanto el aprendizaje
+    layers.Dense(128, activation='relu'),
+    layers.Dropout(0.3),
+    
     # Capa de salida: 10 neuronas porque hay 10 categorías de ropa, usa softmax para dar probabilidades
     layers.Dense(25, activation='softmax') 
 ])
@@ -88,9 +102,9 @@ model.summary()
 # 4. Entrenar el modelo
 print("Iniciando el entrenamiento...")
 # Entrenamos durante 5 "epochs" (pasadas completas por todos los datos)
-model.fit(train_images, train_labels, epochs=10, validation_data=(test_images, test_labels))
+model.fit(datagen.flow(train_images, train_labels, batch_size=16), epochs=10, validation_data=(test_images, test_labels))
 
-model.save("Cuarta_version.keras")
+model.save("version3_0.keras")
 
 
 print("¡Entrenamiento completado!")

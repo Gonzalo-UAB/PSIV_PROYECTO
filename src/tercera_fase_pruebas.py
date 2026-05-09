@@ -4,35 +4,41 @@ from tensorflow.keras.models import load_model
 import numpy as np
 import time
 from Convertidor import preparar_imagen
+letras = ["a","b", "c","d","e","f","g","h","i","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y"]
+nums = [0,1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
+dicResultados = {}
+for num, let in zip(nums,letras):
+    dicResultados[num] = let
 
-model = load_model("Cuarta_version.keras")
+model = load_model("version3_0.keras")
 test_labels = np.zeros(7172, dtype=np.int64)
 test_images = np.zeros((7172, 28, 28), dtype=np.float32)
 
-with open(r"PSIV_PROYECTO\data\dataset_mnist_ASL\sign_mnist_test.csv") as nH:
-    nH.readline()
+# with open(r"PSIV_PROYECTO\data\dataset_mnist_ASL\sign_mnist_test.csv") as nH:
+#     nH.readline()
 
-    for i, line in enumerate(nH):
-        linia = line.strip().split(",")
+#     for i, line in enumerate(nH):
+#         linia = line.strip().split(",")
 
-        test_labels[i] = int(linia[0])
+#         test_labels[i] = int(linia[0])
 
-        pixels = np.array(linia[1:], dtype=np.float32)
-        test_images[i] = pixels.reshape(28, 28)
+#         pixels = np.array(linia[1:], dtype=np.float32)
+#         test_images[i] = pixels.reshape(28, 28)
 
 
 
 # Tomamos una imagen del set de prueba como ejemplo
-img = preparar_imagen('a_28x28.jpg')
+img = preparar_imagen('r_blanco_28x28.png')
 
 # Los modelos de Keras están optimizados para hacer predicciones en "lotes" (batches)
 # Por eso añadimos una dimensión extra para que sea (1, 28, 28, 1)
 img_batch = (np.expand_dims(img, 0))
 
 # Realizar la predicción
+# prediccion = model.predict(img)
 predicciones = model.predict(img_batch)
 
-# La salida es un array con 10 probabilidades. Buscamos el índice con la mayor.
-indice_clase = np.argmax(predicciones[0])
+# La salida es un array con 25 probabilidades. Buscamos el índice con la mayor.
+indice_clase = int(np.argmax(predicciones[0]))
 
-print(f"El modelo predice que es la clase: {indice_clase}")
+print(f"El modelo predice que es la clase: {dicResultados[indice_clase]}")

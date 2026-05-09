@@ -15,9 +15,9 @@ def preparar_imagen(ruta_imagen):
     
     # 4. Convertir a array de numpy
     img_array = np.array(img)
-    
+
     # 5. Normalizar (0-255 -> 0.0-1.0)
-    # img_array = img_array.astype('float32') / 255.0
+    img_array = img_array.astype('float32') / 255.0
     
     # 6. Invertir colores (Opcional)
     # MNIST usa fondo negro (0) y dibujo blanco (1). 
@@ -26,6 +26,7 @@ def preparar_imagen(ruta_imagen):
     
     # 7. Expandir dimensiones para que sea (1, 28, 28, 1)    
     return img_array
+
 
 # Uso:
 # mi_imagen = preparar_imagen('mi_zapato.jpg')
