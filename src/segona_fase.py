@@ -55,7 +55,7 @@ img_and_not = cv2.bitwise_and(img_remove_static, cv2.bitwise_not(img_bg_bi))
 
 #Closing de un opening
 kernel_opening = np.ones((5,5), np.uint8)
-kernel_closing = np.ones((15,15), np.uint8)
+kernel_closing = np.ones((10,10), np.uint8)
 img_opening = cv2.morphologyEx(img_and_not, cv2.MORPH_OPEN, kernel_opening)
 img_closing = cv2.morphologyEx(img_opening, cv2.MORPH_CLOSE, kernel_closing)
 
@@ -90,8 +90,13 @@ if ConvexHull is not None and len(ConvexHull) > 3:
             start = tuple(contours[0][s][0])
             end = tuple(contours[0][e][0])
             far = tuple(contours[0][f][0])
-            if d > 3000:  # Umbral para contar un dedo levantado
+            if d > 1000:  # Umbral para contar un dedo levantado
                 num_fingers += 1
+
+#Detección de puntos clave con ORB
+orb = cv2.ORB_create()
+keypoints, descriptors = orb.detectAndCompute(clean_img, None)
+img_keypoints = cv2.drawKeypoints(result, keypoints, None, color=(0, 255, 0), flags=0)
 
 
 #PLOT
