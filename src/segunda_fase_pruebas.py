@@ -27,18 +27,13 @@ test_images = np.zeros((7172, 28, 28), dtype=np.float32)
 
 
 
-# Tomamos una imagen del set de prueba como ejemplo
 img = preparar_imagen('r_blanco_28x28.png')
 
-# Los modelos de Keras están optimizados para hacer predicciones en "lotes" (batches)
-# Por eso añadimos una dimensión extra para que sea (1, 28, 28, 1)
 img_batch = (np.expand_dims(img, 0))
 
 # Realizar la predicción
-# prediccion = model.predict(img)
 predicciones = model.predict(img_batch)
 
-# La salida es un array con 25 probabilidades. Buscamos el índice con la mayor.
 indice_clase = int(np.argmax(predicciones[0]))
 
 print(f"El modelo predice que es la clase: {dicResultados[indice_clase]}")

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.10.29)  5 MAY 2026 09:16
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.10.29)  11 MAY 2026 00:10
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -445,59 +445,77 @@ File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
 
 
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <9> on input line 108.
+(Font)              <9> on input line 124.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 108.
+(Font)              <6> on input line 124.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 108.
+(Font)              <5> on input line 124.
 [1{c:/texlive/2025/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{c:/texlive/2025/texmf-dist/fonts/enc/dvips/base/8r.enc}
 
 ]
+
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 130.
+(Font)              <7> on input line 152.
 
 
-<figs/Fig1.jpg, id=72, 2019.545pt x 1060.96375pt>
-File: figs/Fig1.jpg Graphic file (type jpg)
-<use figs/Fig1.jpg>
-Package pdftex.def Info: figs/Fig1.jpg  used on input line 152.
-(pdftex.def)             Requested size: 211.68533pt x 111.20212pt.
+[2]
 
 
-[2 <./figs/Fig1.jpg>]
-<figs/Fig2.jpg, id=83, 1517.67pt x 1613.02625pt>
-File: figs/Fig2.jpg Graphic file (type jpg)
-<use figs/Fig2.jpg>
-Package pdftex.def Info: figs/Fig2.jpg  used on input line 166.
-(pdftex.def)             Requested size: 211.68533pt x 224.9853pt.
+
+[3]
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family ptm in TS1 encoding.
+            Default family used instead on input line 206.
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family ptm in TS1 encoding.
+            Default family used instead on input line 206.
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family ptm in TS1 encoding.
+            Default family used instead on input line 206.
+<figs/confusion_matrix.png, id=89, 703.1871pt x 715.83435pt>
+File: figs/confusion_matrix.png Graphic file (type png)
+<use figs/confusion_matrix.png>
+Package pdftex.def Info: figs/confusion_matrix.png  used on input line 232.
+(pdftex.def)             Requested size: 211.68533pt x 215.4947pt.
+<figs/training_history.png, id=91, 715.11165pt x 282.21436pt>
+File: figs/training_history.png Graphic file (type png)
+<use figs/training_history.png>
+Package pdftex.def Info: figs/training_history.png  used on input line 244.
+(pdftex.def)             Requested size: 211.68533pt x 83.53671pt.
 
 
-LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 201.
+LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 281.
 (c:/texlive/2025/texmf-dist/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
 
-[3 <./figs/Fig2.jpg>] (./miniProjecte-VC-PSIC.aux)
+[4{c:/texlive/2025/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc} <./figs/confusion_matrix.png> <./figs/training_history.png>]
+
+
+
+[5
+
+] (./miniProjecte-VC-PSIC.aux)
  ***********
 LaTeX2e <2025-06-01> patch level 1
 L3 programming layer <2025-10-24>
  ***********
 Package rerunfilecheck Info: File `miniProjecte-VC-PSIC.out' has not changed.
-(rerunfilecheck)             Checksum: DFF7EE0226A4B1ED0E157E4B32A15D1E;1834.
+(rerunfilecheck)             Checksum: 8491CDB723DB214C7C8E6032CD79F13D;2420.
  ) 
 Here is how much of TeX's memory you used:
- 12968 strings out of 467747
- 211010 string characters out of 5431120
- 670635 words of memory out of 5000000
- 41485 multiletter control sequences out of 15000+600000
- 645906 words of font info for 69 fonts, out of 8000000 for 9000
+ 12972 strings out of 467747
+ 211110 string characters out of 5431120
+ 671564 words of memory out of 5000000
+ 41482 multiletter control sequences out of 15000+600000
+ 647867 words of font info for 72 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,12n,79p,950b,574s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmri8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/zapfding/uzdr.pfb>
-Output written on miniProjecte-VC-PSIC.pdf (3 pages, 504475 bytes).
+ 75i,12n,79p,950b,598s stack positions out of 10000i,1000n,20000p,200000b,200000s
+<c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmb8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmri8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/zapfding/uzdr.pfb>
+Output written on miniProjecte-VC-PSIC.pdf (5 pages, 328949 bytes).
 PDF statistics:
- 155 PDF objects out of 1000 (max. 8388607)
- 126 compressed objects within 2 object streams
- 26 named destinations out of 1000 (max. 500000)
- 123 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 178 PDF objects out of 1000 (max. 8388607)
+ 143 compressed objects within 2 object streams
+ 29 named destinations out of 1000 (max. 500000)
+ 131 words of extra memory for PDF output out of 10000 (max. 10000000)
 

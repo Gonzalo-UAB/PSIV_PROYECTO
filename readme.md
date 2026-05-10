@@ -38,10 +38,11 @@ Arbol resumido:
 ```text
 PSIV_PROYECTO/
 ├─ src/
-│  ├─ primera_fase.py
-│  ├─ segona_fase.py
+│  ├─ primera_fase_segmentación.py
+│  ├─ primera_fase_descriptores.py
+│  ├─ segunda_fase.py
+│  ├─ segunda_fase_pruebas.py
 │  ├─ tercera_fase.py
-│  ├─ tercera_fase_pruebas.py
 │  ├─ cuarta_fase.py
 │  ├─ Convertidor.py
 │  └─ Projecte.ipynb
@@ -65,7 +66,7 @@ PSIV_PROYECTO/
 
 ## Que hace cada archivo de `src`
 
-### `primera_fase.py`
+### `primera_fase_segmentación.py`
 
 Primera etapa (vision clasica):
 
@@ -76,9 +77,9 @@ Primera etapa (vision clasica):
 - Limpia ruido con morfologia y connected components.
 - Dibuja contornos y muestra resultados con `matplotlib`.
 
-### `segona_fase.py`
+### `primera_fase_descriptores.py`
 
-Segunda etapa (gesto clasico):
+Primera fase extendida (gesto clasico con descriptores):
 
 - Convierte imagenes a RGB y YCrCb.
 - Construye binarizacion de piel pixel a pixel.
@@ -89,9 +90,9 @@ Segunda etapa (gesto clasico):
 - Extrae descriptores ORB y compara gestos por matches.
 - Visualiza pipeline completo en una cuadricula de plots.
 
-### `tercera_fase.py`
+### `segunda_fase.py`
 
-Tercera etapa (deep learning en ASL MNIST):
+Segunda etapa (deep learning en ASL MNIST):
 
 - Lee `sign_mnist_train.csv` y `sign_mnist_test.csv`.
 - Normaliza datos y anade canal para CNN.
@@ -99,18 +100,18 @@ Tercera etapa (deep learning en ASL MNIST):
 - Entrena un modelo convolucional.
 - Guarda el modelo en `models/version3_0.keras`.
 
-### `tercera_fase_pruebas.py`
+### `segunda_fase_pruebas.py`
 
-Script de inferencia para la tercera fase:
+Script de inferencia para la segunda fase:
 
 - Carga `models/version3_0.keras`.
 - Usa `Convertidor.preparar_imagen` para preprocesar una imagen 28x28.
 - Ejecuta prediccion y mapea el indice a letra ASL.
 - Imprime la letra estimada por el modelo.
 
-### `cuarta_fase.py`
+### `tercera_fase.py`
 
-Cuarta etapa (deep learning con datos esqueletales):
+Tercera etapa (deep learning con datos esqueletales):
 
 - Recorre `data/dataset_skeletal_hand_gesture/skeletal`.
 - Parsea XML con `xmltodict` y extrae features de mano/dedos.
@@ -120,6 +121,10 @@ Cuarta etapa (deep learning con datos esqueletales):
 - Evalua accuracy/loss.
 - Guarda metricas y diagnosticos en `figs/`.
 - Guarda modelo en `models/gesture_model.keras` y scaler en `models/scaler.pkl`.
+
+### `cuarta_fase.py`
+
+Archivo presente pero vacio actualmente (placeholder para una fase futura).
 
 ### `Convertidor.py`
 
@@ -139,11 +144,11 @@ Notebook de pruebas y experimentacion (prototipos de segmentacion y umbralizado)
 Desde la raiz del repo:
 
 ```bash
-python src/primera_fase.py
-python src/segona_fase.py
+python src/primera_fase_segmentación.py
+python src/primera_fase_descriptores.py
+python src/segunda_fase.py
+python src/segunda_fase_pruebas.py
 python src/tercera_fase.py
-python src/tercera_fase_pruebas.py
-python src/cuarta_fase.py
 ```
 
 ## Datos y rutas esperadas
@@ -153,6 +158,7 @@ El codigo espera rutas de este estilo:
 - `data/images/background.png`, `thumbs_up.png`, etc.
 - `data/dataset_mnist_ASL/sign_mnist_train.csv` y `sign_mnist_test.csv`.
 - `data/dataset_skeletal_hand_gesture/skeletal/<sujeto>/<subset>/<gesto>/*.xml`.
+- `segunda_fase_pruebas.py` espera una imagen de prueba (por defecto `r_blanco_28x28.png`) en la raiz o ruta ajustada en el script.
 
 Si cambias nombres o rutas, ajusta las constantes `BASE_DIR`/`DATASET_PATH` en
 cada script.
