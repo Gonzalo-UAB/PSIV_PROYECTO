@@ -61,7 +61,7 @@ img_closing = cv2.morphologyEx(img_opening, cv2.MORPH_CLOSE, kernel_closing)
 
 #Para cada región encontrar el centroide y el área, y eliminar las regiones pequeñas
 num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(img_closing)
-clean_img = np.zeros_like(img_closing)
+clean_img = np.zeros_like(img_closing, dtype=np.uint8)
 min_area = 250
 for i in range(1, num_labels):
     if stats[i, cv2.CC_STAT_AREA] > min_area:
@@ -94,10 +94,12 @@ if ConvexHull is not None and len(ConvexHull) > 3:
                 num_fingers += 1
 
 #Detección de puntos clave con ORB
-orb = cv2.ORB_create()
+orb = cv2.ORB_create(nfeatures=100)
 keypoints, descriptors = orb.detectAndCompute(clean_img, None)
-img_keypoints = cv2.drawKeypoints(result, keypoints, None, color=(0, 255, 0), flags=0)
+img_keypoints = cv2.drawKeypoints(result, keypoints, None, color=(0, 0, 255), flags=0)
 
+
+#Comparar con otro gesto
 
 #PLOT
 plt.figure(figsize=(15, 10))
@@ -144,7 +146,7 @@ plt.title('Centroides de las regiones de las manos')
 plt.axis('off')
 
 plt.subplot(3, 3, 9) #Segmentos de las manos
-plt.imshow(result)
+plt.imshow(img_keypoints)
 plt.title(f'Segmentos de las manos con {num_fingers} dedos levantados')
 plt.axis('off')
 plt.tight_layout()

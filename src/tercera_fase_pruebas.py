@@ -1,6 +1,6 @@
 import tensorflow as tf
-from tensorflow.keras import layers, models
-from tensorflow.keras.models import load_model
+from tensorflow.python.keras import layers, models
+from tensorflow.python.keras.models import load_model
 import numpy as np
 import time
 from Convertidor import preparar_imagen
