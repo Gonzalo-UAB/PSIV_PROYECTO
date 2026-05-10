@@ -10,7 +10,7 @@ dicResultados = {}
 for num, let in zip(nums,letras):
     dicResultados[num] = let
 
-model = load_model("version3_0.keras")
+model = load_model("models/version3_0.keras")
 test_labels = np.zeros(7172, dtype=np.int64)
 test_images = np.zeros((7172, 28, 28), dtype=np.float32)
 

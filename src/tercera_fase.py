@@ -104,7 +104,7 @@ print("Iniciando el entrenamiento...")
 # Entrenamos durante 5 "epochs" (pasadas completas por todos los datos)
 model.fit(datagen.flow(train_images, train_labels, batch_size=16), epochs=10, validation_data=(test_images, test_labels))
 
-model.save("version3_0.keras")
+model.save("models/version3_0.keras")
 
 
 print("¡Entrenamiento completado!")

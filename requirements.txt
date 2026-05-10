@@ -3,4 +3,7 @@ numpy==1.26.4
 opencv-python
 tensorflow
 six
+xmltodict
+pandas
+sickit-learn
 #protobuf<7,>=3.20
