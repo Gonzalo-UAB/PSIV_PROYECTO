@@ -97,15 +97,6 @@ def orb_features(clean_img, result):
     
     return img_keypoints, keypoints, descriptors
 
-def Haar_features(clean_img, result):
-    #Detección de puntos clave con Haar Cascades
-    hand_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_hand.xml')
-    hands = hand_cascade.detectMultiScale(clean_img, scaleFactor=1.1, minNeighbors=5)
-    for (x, y, w, h) in hands:
-        cv2.rectangle(result, (x, y), (x + w, y + h), (255, 0, 0), 2)
-    
-    return result, hands
-
 #Comparar con otro gesto
 
 #PLOT
