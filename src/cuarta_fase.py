@@ -7,9 +7,16 @@ import pickle
 import sys
 import time
 from urllib.request import urlretrieve
-import json
 from datetime import datetime
 import csv
+import argparse
+
+# Argumentos de línea de comandos
+parser = argparse.ArgumentParser(description='Detección de gestos en directo')
+parser.add_argument('--logs', action='store_true', default=False, 
+                    help='Activar registro de logs (skeletal data, predictions y frames)')
+args = parser.parse_args()
+ENABLE_LOGS = args.logs
 
 # Rutas
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
@@ -27,8 +34,9 @@ SKELETAL_DATA_DIR = LOGS_DIR / 'skeletal_data'
 PREDICTIONS_LOG_DIR = LOGS_DIR / 'predictions'
 FRAMES_DIR = LOGS_DIR / 'frames'
 
-for dir_path in [LOGS_DIR, SKELETAL_DATA_DIR, PREDICTIONS_LOG_DIR, FRAMES_DIR]:
-    dir_path.mkdir(parents=True, exist_ok=True)
+if ENABLE_LOGS:
+    for dir_path in [LOGS_DIR, SKELETAL_DATA_DIR, PREDICTIONS_LOG_DIR, FRAMES_DIR]:
+        dir_path.mkdir(parents=True, exist_ok=True)
 
 # Timestamp para esta sesión
 SESSION_TIMESTAMP = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -310,6 +318,9 @@ def get_handedness_label(landmarker_result, index):
 
 def save_skeletal_data(timestamp, right_landmarks=None, right_score=0.0, left_landmarks=None, left_score=0.0):
     """Guarda los datos esqueletales de ambas manos en CSV."""
+    if not ENABLE_LOGS:
+        return
+    
     try:
         # Preparar datos
         row = {
@@ -347,6 +358,9 @@ def save_skeletal_data(timestamp, right_landmarks=None, right_score=0.0, left_la
 
 def log_prediction(timestamp, gesture_name, confidence, gesture_idx, right_detected, left_detected):
     """Registra la predicción del modelo."""
+    if not ENABLE_LOGS:
+        return
+    
     try:
         row = {
             'timestamp': timestamp,
@@ -370,6 +384,9 @@ def log_prediction(timestamp, gesture_name, confidence, gesture_idx, right_detec
 
 def save_frame_with_skeleton(image, timestamp, frame_number):
     """Guarda un frame con los skeletons dibujados."""
+    if not ENABLE_LOGS:
+        return
+    
     try:
         frame_filename = FRAMES_DIR / f'frame_{SESSION_TIMESTAMP}_{frame_number:06d}_{timestamp.replace(":", "").replace(".", "")}.jpg'
         cv2.imwrite(str(frame_filename), image)
@@ -387,10 +404,13 @@ height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 print(f"Video: {width}x{height} @ {fps} FPS")
 print("Presiona ESC para salir")
-print(f"\nLogs guardándose en: {LOGS_DIR}")
-print(f"  - Datos esqueletales: {SKELETAL_LOG_FILE}")
-print(f"  - Predicciones: {PREDICTIONS_LOG_FILE}")
-print(f"  - Frames: {FRAMES_DIR}\n")
+if ENABLE_LOGS:
+    print(f"\nLogs guardándose en: {LOGS_DIR}")
+    print(f"  - Datos esqueletales: {SKELETAL_LOG_FILE}")
+    print(f"  - Predicciones: {PREDICTIONS_LOG_FILE}")
+    print(f"  - Frames: {FRAMES_DIR}\n")
+else:
+    print("Modo de ejecución: SIN LOGS\n")
 
 frame_count = 0
 
