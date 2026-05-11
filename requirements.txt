@@ -1,9 +1,10 @@
 matplotlib==3.8.4
 numpy==1.26.4
 opencv-python
+mediapipe>=0.10.35
 tensorflow
 six
 xmltodict
 pandas
-sickit-learn
+scikit-learn
 #protobuf<7,>=3.20
