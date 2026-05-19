@@ -2,7 +2,7 @@
 
 import os
 import tensorflow as tf
-from tensorflow.keras import layers, models
+from tensorflow.keras import layers, models # type: ignore
 import pathlib
 import xmltodict
 import numpy as np
@@ -38,49 +38,45 @@ POSE_LABELS = {
 CACHE_DIR = BASE_DIR / 'cache'
 CACHE_FILE = CACHE_DIR / 'skeletal_dataset.pkl'
 FIGS_DIR = BASE_DIR / 'figs'
+PER_HAND_FEATURES_DIM = 77
 
 
 def extract_hand_data(xml_file_path):
-    """Extrae datos de mano de archivo XML"""
+    """Extrae una muestra de features por cada mano detectada en el XML."""
     try:
         with open(xml_file_path, 'r') as f:
             data = xmltodict.parse(f.read())
         
         frame = data['opencv_storage']['Frame']
-        frame_id = frame['ID']
         
-        # Extraer features de ambas imágenes
-        features = []
+        # Extraer features por mano
+        hand_features = []
 
-        for image_key in ['RigthImage', 'LeftImage']:
-            if image_key not in frame['Images']:
-                continue
+        def _read_xyz(node):
+            if not node or 'data' not in node:
+                return [0.0, 0.0, 0.0]
 
-            image = frame['Images'][image_key]
-            if 'Hands' not in image or 'Right' not in image['Hands']:
-                continue
+            values = [float(x) for x in node['data'].strip().split()]
+            return values[:3] if len(values) >= 3 else values + [0.0] * (3 - len(values))
 
-            hands = image['Hands']['Right']
+        def _get_joint_position(source, *keys):
+            for key in keys:
+                if key in source:
+                    return _read_xyz(source[key])
+            return [0.0, 0.0, 0.0]
 
-            if isinstance(hands, list):
-                hands = hands[0]
-
+        def _build_hand_features(hands):
             # Extraer 3D skeleton points
             skeleton_points = []
 
             # Centro de la mano
-            if 'Center' in hands:
-                center = [float(x) for x in hands['Center']['data'].strip().split()]
-                skeleton_points.extend(center)
-            else:
-                skeleton_points.extend([0, 0, 0])
+            skeleton_points.extend(_read_xyz(hands.get('Center')))
+
+            # Velocidad del centro de la mano
+            skeleton_points.extend(_read_xyz(hands.get('Velocity')))
 
             # Muñeca - OPCIONAL (algunos XMLs no lo tienen)
-            if 'WristPosition' in hands:
-                wrist = [float(x) for x in hands['WristPosition']['data'].strip().split()]
-                skeleton_points.extend(wrist)
-            else:
-                skeleton_points.extend([0, 0, 0])
+            skeleton_points.extend(_read_xyz(hands.get('WristPosition')))
 
             # Datos de dedos
             if 'Fingers' in hands:
@@ -89,24 +85,22 @@ def extract_hand_data(xml_file_path):
                         finger = hands['Fingers'][finger_name]
 
                         # TipPosition
-                        if 'TipPosition' in finger:
-                            tip = [float(x) for x in finger['TipPosition']['data'].strip().split()]
-                            skeleton_points.extend(tip)
-                        else:
-                            skeleton_points.extend([0, 0, 0])
+                        skeleton_points.extend(_get_joint_position(finger, 'TipPosition'))
+
+                        # DIPPosition
+                        skeleton_points.extend(_get_joint_position(finger, 'dipPosition', 'DIPPosition'))
+
+                        # PIPPosition
+                        skeleton_points.extend(_get_joint_position(finger, 'pipPosition', 'PIPPosition'))
 
                         # MCPPosition
-                        if 'mcpPosition' in finger:
-                            mcp = [float(x) for x in finger['mcpPosition']['data'].strip().split()]
-                            skeleton_points.extend(mcp)
-                        else:
-                            skeleton_points.extend([0, 0, 0])
+                        skeleton_points.extend(_get_joint_position(finger, 'mcpPosition', 'MCPPosition'))
                     else:
                         # Si el dedo no existe, añadir ceros
-                        skeleton_points.extend([0, 0, 0, 0, 0, 0])
+                        skeleton_points.extend([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
             else:
                 # Si no hay dedos, añadir ceros para todos
-                skeleton_points.extend([0] * 30)  # 5 dedos * 6 valores (tip + mcp)
+                skeleton_points.extend([0] * 60)  # 5 dedos * 4 puntos * 3 valores (tip, dip, pip, mcp)
 
             # Confidence
             confidence = float(hands.get('Confidence', 0))
@@ -127,14 +121,31 @@ def extract_hand_data(xml_file_path):
                 extended = [0] * 5
 
             # Combinar todas las features
-            image_features = skeleton_points + [confidence, grab_strength, pinch_strength] + extended
-            features.extend(image_features)
+            return skeleton_points + [confidence, grab_strength, pinch_strength] + extended
 
-            # Si no hay features válidas, retornar None
-        if len(features) == 0:
+        for image_key in ['RigthImage', 'LeftImage']:
+            if image_key not in frame['Images']:
+                continue
+
+            image = frame['Images'][image_key]
+            if 'Hands' not in image:
+                continue
+
+            for hand_side in ['Right', 'Left']:
+                if hand_side not in image['Hands']:
+                    continue
+
+                hands_data = image['Hands'][hand_side]
+                hands_list = hands_data if isinstance(hands_data, list) else [hands_data]
+
+                for hands in hands_list:
+                    image_features = _build_hand_features(hands)
+                    hand_features.append(np.array(image_features, dtype=np.float32))
+
+        if len(hand_features) == 0:
             return None
 
-        return np.array(features, dtype=np.float32)
+        return hand_features
 
     except Exception as e:
         print(f"Error procesando {xml_file_path}: {e}")
@@ -178,7 +189,20 @@ def load_cache():
         return None
 
     with open(CACHE_FILE, 'rb') as f:
-        return pickle.load(f)
+        cached_dataset = pickle.load(f)
+
+    X_cached = cached_dataset.get('X')
+    if X_cached is None or X_cached.ndim != 2:
+        return None
+
+    if X_cached.shape[1] != PER_HAND_FEATURES_DIM:
+        print(
+            f"Cache incompatible ({X_cached.shape[1]} features); "
+            f"esperado {PER_HAND_FEATURES_DIM}. Reconstruyendo dataset..."
+        )
+        return None
+
+    return cached_dataset
 
 
 def save_cache(dataset):
@@ -189,17 +213,26 @@ def save_cache(dataset):
 
 def _extract_sample(sample):
     xml_file, label, patient_id, archive_type, gesture_folder = sample
-    features = extract_hand_data(xml_file)
+    hands_features = extract_hand_data(xml_file)
 
-    if features is None:
+    if hands_features is None:
         return None
 
-    return features, label, {
-        'patient': patient_id,
-        'archive_type': archive_type,
-        'gesture': gesture_folder,
-        'xml_file': xml_file
-    }
+    samples_out = []
+    for hand_idx, features in enumerate(hands_features):
+        samples_out.append((
+            features,
+            label,
+            {
+                'patient': patient_id,
+                'archive_type': archive_type,
+                'gesture': gesture_folder,
+                'xml_file': xml_file,
+                'hand_instance': hand_idx,
+            }
+        ))
+
+    return samples_out
 
 
 def extract_label_from_path(folder_path, archive_type):
@@ -238,10 +271,10 @@ def build_dataset(force_rebuild=False, use_cache=True, max_workers=None):
             if result is None:
                 continue
 
-            features, label, sample_metadata = result
-            X.append(features)
-            y.append(label)
-            metadata.append(sample_metadata)
+            for features, label, sample_metadata in result:
+                X.append(features)
+                y.append(label)
+                metadata.append(sample_metadata)
 
     X = np.asarray(X, dtype=np.float32)
     y = np.asarray(y, dtype=np.int64)
@@ -429,3 +462,7 @@ def main():
 if __name__ == "__main__":
     main()
     
+#LDA
+#Cross-validation
+#Validation set
+#

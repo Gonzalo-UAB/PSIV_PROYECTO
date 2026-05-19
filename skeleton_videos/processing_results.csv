@@ -1,0 +1,16 @@
+patient_id,gesture_name,seq_type,seq_id,status,n_frames,quality_score,output_path
+06,02_l,test_gesture,00,success,6,5.649620456695557,..\skeleton_videos\gesture_02_l\02_l_test_gesture.mp4
+06,04_fist_moved,test_gesture,00,success,6,4.7192427349090575,..\skeleton_videos\gesture_04_fist_moved\04_fist_moved_test_gesture.mp4
+11,06_index,test_gesture,00,success,6,5.555070323944092,..\skeleton_videos\gesture_06_index\06_index_test_gesture.mp4
+07,07_ok,test_gesture,01,success,6,5.67,..\skeleton_videos\gesture_07_ok\07_ok_test_gesture.mp4
+01,09_c,test_gesture,00,success,6,5.4600508642196655,..\skeleton_videos\gesture_09_c\09_c_test_gesture.mp4
+13,11_heavy,test_gesture,01,success,6,5.67,..\skeleton_videos\gesture_11_heavy\11_heavy_test_gesture.mp4
+12,12_hang,test_gesture,00,success,6,5.637335224151611,..\skeleton_videos\gesture_12_hang\12_hang_test_gesture.mp4
+02,13_two,test_gesture,00,success,6,5.67,..\skeleton_videos\gesture_13_two\13_two_test_gesture.mp4
+05,14_three,test_gesture,00,success,6,5.67,..\skeleton_videos\gesture_14_three\14_three_test_gesture.mp4
+04,15_four,test_gesture,01,success,6,5.67,..\skeleton_videos\gesture_15_four\15_four_test_gesture.mp4
+03,16_five,test_gesture,00,success,6,5.67,..\skeleton_videos\gesture_16_five\16_five_test_gesture.mp4
+01,19_down,test_gesture,01,success,6,5.096072716712952,..\skeleton_videos\gesture_19_down\19_down_test_gesture.mp4
+12,20_left,test_gesture,01,success,12,4.60740403175354,..\skeleton_videos\gesture_20_left\20_left_test_gesture.mp4
+12,21_right,test_gesture,01,success,16,4.510113635063171,..\skeleton_videos\gesture_21_right\21_right_test_gesture.mp4
+01,22_up,test_gesture,00,success,6,5.311302585601807,..\skeleton_videos\gesture_22_up\22_up_test_gesture.mp4

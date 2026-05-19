@@ -71,7 +71,7 @@ print(f"Cargando scaler desde: {SCALER_PATH}")
 with open(SCALER_PATH, 'rb') as f:
     scaler = pickle.load(f)
 
-EXPECTED_FEATURES = int(getattr(scaler, 'n_features_in_', 96))
+EXPECTED_FEATURES = int(getattr(scaler, 'n_features_in_', 77))
 print(f"Scaler espera {EXPECTED_FEATURES} features")
 
 HAND_CONNECTIONS = [
@@ -81,6 +81,16 @@ HAND_CONNECTIONS = [
     (9, 13), (13, 14), (14, 15), (15, 16),
     (13, 17), (17, 18), (18, 19), (19, 20),
     (0, 17)
+]
+
+# Nombres estándar de landmarks de MediaPipe Hands (21 puntos)
+LANDMARK_NAMES = [
+    'wrist',
+    'thumb_cmc', 'thumb_mcp', 'thumb_ip', 'thumb_tip',
+    'index_mcp', 'index_pip', 'index_dip', 'index_tip',
+    'middle_mcp', 'middle_pip', 'middle_dip', 'middle_tip',
+    'ring_mcp', 'ring_pip', 'ring_dip', 'ring_tip',
+    'pinky_mcp', 'pinky_pip', 'pinky_dip', 'pinky_tip',
 ]
 
 
@@ -152,6 +162,13 @@ def initialize_hand_detector():
 
 hand_detector = initialize_hand_detector()
 
+# Estado temporal para aproximar velocidad del centro por mano
+_PREV_HAND_CENTER = {
+    'Right': None,
+    'Left': None,
+    'Unknown': None,
+}
+
 def _compute_grab_and_pinch(landmarks):
     """Aproxima grab/pinch strength a partir de distancias entre landmarks."""
     wrist = landmarks[0]
@@ -162,7 +179,8 @@ def _compute_grab_and_pinch(landmarks):
         middle_mcp.z - wrist.z
     ]) + 1e-6
 
-    finger_pairs = [(4, 2), (8, 5), (12, 9), (16, 13), (20, 17)]
+    # (tip, mcp) por dedo en MediaPipe
+    finger_pairs = [(4, 1), (8, 5), (12, 9), (16, 13), (20, 17)]
     tip_to_mcp = []
     for tip_idx, mcp_idx in finger_pairs:
         tip = landmarks[tip_idx]
@@ -185,7 +203,7 @@ def _compute_grab_and_pinch(landmarks):
     return grab_strength, pinch_strength, palm_scale
 
 
-def _build_image_features_from_mediapipe(landmarks, confidence):
+def _build_image_features_from_mediapipe(landmarks, confidence, hand_side='Unknown'):
     """
     Construye 44 features compatibles con tercera_fase.py para una imagen.
     MediaPipe proporciona valores normalizados (0-1), necesitamos denormalizarlos
@@ -198,31 +216,70 @@ def _build_image_features_from_mediapipe(landmarks, confidence):
     center_x = np.mean([lm.x for lm in landmarks]) * SCALE_FACTOR
     center_y = np.mean([lm.y for lm in landmarks]) * SCALE_FACTOR
     center_z = np.mean([lm.z for lm in landmarks]) * SCALE_FACTOR
+
+    # Velocidad aproximada del centro (delta entre frames consecutivos)
+    side_key = hand_side if hand_side in _PREV_HAND_CENTER else 'Unknown'
+    prev_center = _PREV_HAND_CENTER.get(side_key)
+    if prev_center is None:
+        vel_x, vel_y, vel_z = 0.0, 0.0, 0.0
+    else:
+        vel_x = center_x - prev_center[0]
+        vel_y = center_y - prev_center[1]
+        vel_z = center_z - prev_center[2]
+    _PREV_HAND_CENTER[side_key] = (center_x, center_y, center_z)
     
     # Wrist (landmark 0)
     wrist_x = landmarks[0].x * SCALE_FACTOR
     wrist_y = landmarks[0].y * SCALE_FACTOR
     wrist_z = landmarks[0].z * SCALE_FACTOR
 
-    skeleton_points = [center_x, center_y, center_z, wrist_x, wrist_y, wrist_z]
+    # Estructura similar a tercera_fase.py:
+    # Center(3) + Velocity(3) + Wrist(3) + por dedo [Tip, DIP, PIP, MCP](12)
+    skeleton_points = [
+        center_x, center_y, center_z,
+        vel_x, vel_y, vel_z,
+        wrist_x, wrist_y, wrist_z,
+    ]
 
-    # Orden de dedos (Thumb, Index, Middle, Ring, Pinky): (tip_idx, mcp_idx)
-    # MediaPipe: Thumb(4,3), Index(8,7), Middle(12,11), Ring(16,15), Pinky(20,19)
-    tip_mcp_indices = [(4, 3), (8, 7), (12, 11), (16, 15), (20, 19)]
+    # Orden de dedos (Thumb, Index, Middle, Ring, Pinky): (tip, dip, pip, mcp)
+    finger_joint_indices = [
+        (4, 3, 2, 1),      # Thumb
+        (8, 7, 6, 5),      # Index
+        (12, 11, 10, 9),   # Middle
+        (16, 15, 14, 13),  # Ring
+        (20, 19, 18, 17),  # Pinky
+    ]
     extended = []
     grab_strength, pinch_strength, palm_scale = _compute_grab_and_pinch(landmarks)
 
-    for tip_idx, mcp_idx in tip_mcp_indices:
+    for tip_idx, dip_idx, pip_idx, mcp_idx in finger_joint_indices:
         tip = landmarks[tip_idx]
+        dip = landmarks[dip_idx]
+        pip = landmarks[pip_idx]
         mcp = landmarks[mcp_idx]
+
         tip_x = tip.x * SCALE_FACTOR
         tip_y = tip.y * SCALE_FACTOR
         tip_z = tip.z * SCALE_FACTOR
+
+        dip_x = dip.x * SCALE_FACTOR
+        dip_y = dip.y * SCALE_FACTOR
+        dip_z = dip.z * SCALE_FACTOR
+
+        pip_x = pip.x * SCALE_FACTOR
+        pip_y = pip.y * SCALE_FACTOR
+        pip_z = pip.z * SCALE_FACTOR
+
         mcp_x = mcp.x * SCALE_FACTOR
         mcp_y = mcp.y * SCALE_FACTOR
         mcp_z = mcp.z * SCALE_FACTOR
         
-        skeleton_points.extend([tip_x, tip_y, tip_z, mcp_x, mcp_y, mcp_z])
+        skeleton_points.extend([
+            tip_x, tip_y, tip_z,
+            dip_x, dip_y, dip_z,
+            pip_x, pip_y, pip_z,
+            mcp_x, mcp_y, mcp_z,
+        ])
 
         # Heurística de dedo extendido basada en distancia tip-mcp normalizada
         dist = np.linalg.norm([tip.x - mcp.x, tip.y - mcp.y, tip.z - mcp.z]) / palm_scale
@@ -234,36 +291,20 @@ def _build_image_features_from_mediapipe(landmarks, confidence):
 
 def extract_features_from_mediapipe(landmarks, hand_side='Unknown', handedness_score=0.0):
     """
-    Extrae 44 features de una sola mano desde los landmarks de MediaPipe.
+    Extrae features de una sola mano desde los landmarks de MediaPipe.
     """
-    return _build_image_features_from_mediapipe(landmarks, handedness_score)
+    return _build_image_features_from_mediapipe(landmarks, handedness_score, hand_side=hand_side)
 
 
-def build_features_for_both_hands(right_landmarks=None, right_score=0.0, left_landmarks=None, left_score=0.0):
-    """
-    Construye features combinadas para ambas manos (RightImage + LeftImage).
-    Sigue el orden: RightImage (44 features) + LeftImage (44 features) = 88 features
-    """
-    # Extraer features de mano derecha o llenar con ceros
-    if right_landmarks is not None:
-        right_features = extract_features_from_mediapipe(right_landmarks, 'Right', right_score)
-    else:
-        right_features = [0.0] * 44
-    
-    # Extraer features de mano izquierda o llenar con ceros
-    if left_landmarks is not None:
-        left_features = extract_features_from_mediapipe(left_landmarks, 'Left', left_score)
-    else:
-        left_features = [0.0] * 44
-    
-    # Combinar: RightImage + LeftImage
-    full_features = right_features + left_features
-    
+def build_features_for_hand(landmarks, hand_side='Unknown', hand_score=0.0):
+    """Construye el vector de entrada para una sola mano."""
+    full_features = extract_features_from_mediapipe(landmarks, hand_side, hand_score)
+
     if len(full_features) < EXPECTED_FEATURES:
         full_features.extend([0.0] * (EXPECTED_FEATURES - len(full_features)))
     elif len(full_features) > EXPECTED_FEATURES:
         full_features = full_features[:EXPECTED_FEATURES]
-    
+
     features = np.array(full_features, dtype=np.float32)
     return features.reshape(1, -1)
 
@@ -330,20 +371,32 @@ def save_skeletal_data(timestamp, right_landmarks=None, right_score=0.0, left_la
             'left_hand_detected': left_landmarks is not None,
             'left_confidence': left_score if left_landmarks else 0.0
         }
-        
-        # Agregar landmarks de mano derecha
-        if right_landmarks:
-            for idx, lm in enumerate(right_landmarks):
-                row[f'right_lm_{idx}_x'] = lm.x
-                row[f'right_lm_{idx}_y'] = lm.y
-                row[f'right_lm_{idx}_z'] = lm.z
-        
-        # Agregar landmarks de mano izquierda
-        if left_landmarks:
-            for idx, lm in enumerate(left_landmarks):
-                row[f'left_lm_{idx}_x'] = lm.x
-                row[f'left_lm_{idx}_y'] = lm.y
-                row[f'left_lm_{idx}_z'] = lm.z
+
+        def _add_named_landmarks(prefix, landmarks):
+            # Centroide de mano (promedio de los 21 landmarks)
+            if landmarks and len(landmarks) > 0:
+                row[f'{prefix}_center_x'] = float(np.mean([lm.x for lm in landmarks]))
+                row[f'{prefix}_center_y'] = float(np.mean([lm.y for lm in landmarks]))
+                row[f'{prefix}_center_z'] = float(np.mean([lm.z for lm in landmarks]))
+            else:
+                row[f'{prefix}_center_x'] = 0.0
+                row[f'{prefix}_center_y'] = 0.0
+                row[f'{prefix}_center_z'] = 0.0
+
+            # Landmarks con nombre anatómico
+            for idx, name in enumerate(LANDMARK_NAMES):
+                if landmarks and idx < len(landmarks):
+                    lm = landmarks[idx]
+                    row[f'{prefix}_{name}_x'] = float(lm.x)
+                    row[f'{prefix}_{name}_y'] = float(lm.y)
+                    row[f'{prefix}_{name}_z'] = float(lm.z)
+                else:
+                    row[f'{prefix}_{name}_x'] = 0.0
+                    row[f'{prefix}_{name}_y'] = 0.0
+                    row[f'{prefix}_{name}_z'] = 0.0
+
+        _add_named_landmarks('right', right_landmarks)
+        _add_named_landmarks('left', left_landmarks)
         
         # Escribir o agregar a CSV
         file_exists = SKELETAL_LOG_FILE.exists()
@@ -356,19 +409,18 @@ def save_skeletal_data(timestamp, right_landmarks=None, right_score=0.0, left_la
         print(f"Error guardando datos esqueletales: {e}")
 
 
-def log_prediction(timestamp, gesture_name, confidence, gesture_idx, right_detected, left_detected):
-    """Registra la predicción del modelo."""
+def log_prediction(timestamp, hand_side, gesture_name, confidence, gesture_idx):
+    """Registra la predicción del modelo por mano."""
     if not ENABLE_LOGS:
         return
     
     try:
         row = {
             'timestamp': timestamp,
+            'hand_side': hand_side,
             'gesture': gesture_name,
             'confidence': confidence,
-            'class_idx': gesture_idx,
-            'right_hand': right_detected,
-            'left_hand': left_detected
+            'class_idx': gesture_idx
         }
         
         # Escribir o agregar a CSV
@@ -449,17 +501,17 @@ try:
                         'landmarks': landmarks,
                         'score': hand_score
                     }
-                
-                # Extraer features de ambas manos
-                right_landmarks = hands_by_side.get('Right', {}).get('landmarks')
-                right_score = hands_by_side.get('Right', {}).get('score', 0.0)
-                left_landmarks = hands_by_side.get('Left', {}).get('landmarks')
-                left_score = hands_by_side.get('Left', {}).get('score', 0.0)
-                
-                features = build_features_for_both_hands(right_landmarks, right_score, left_landmarks, left_score)
-                
-                # Hacer una predicción con ambas manos
-                gesture_name, confidence, class_idx = predict_gesture(features)
+
+                hand_predictions = {}
+                for hand_side, hand_data in hands_by_side.items():
+                    features = build_features_for_hand(
+                        hand_data['landmarks'],
+                        hand_side=hand_side,
+                        hand_score=hand_data['score']
+                    )
+                    gesture_name, confidence, class_idx = predict_gesture(features)
+                    hand_predictions[hand_side] = (gesture_name, confidence, class_idx)
+                    log_prediction(current_timestamp, hand_side, gesture_name, float(confidence), int(class_idx))
                 
                 # Guardar datos esqueletales y predicción
                 save_skeletal_data(current_timestamp, 
@@ -467,13 +519,13 @@ try:
                                  right_score=hands_by_side.get('Right', {}).get('score', 0.0),
                                  left_landmarks=hands_by_side.get('Left', {}).get('landmarks'),
                                  left_score=hands_by_side.get('Left', {}).get('score', 0.0))
-                
-                log_prediction(current_timestamp, gesture_name, float(confidence), int(class_idx),
-                             'Right' in hands_by_side, 'Left' in hands_by_side)
-                
+
                 # Imprimir en consola cada 30 frames
                 if frame_count % 30 == 0:
-                    print(f"[Frame {frame_count}] {gesture_name}: {confidence:.3f}")
+                    preview = ' | '.join(
+                        [f"{side}:{pred[0]} ({pred[1]:.3f})" for side, pred in hand_predictions.items()]
+                    )
+                    print(f"[Frame {frame_count}] {preview}")
                 
                 # Guardar frame cada FRAMES_SAVE_INTERVAL frames
                 if frame_count % FRAMES_SAVE_INTERVAL == 0:
@@ -482,6 +534,7 @@ try:
                 # Dibujar resultados en todas las manos detectadas
                 for hand_side, hand_data in hands_by_side.items():
                     landmarks = hand_data['landmarks']
+                    gesture_name, confidence, _ = hand_predictions.get(hand_side, ('Desconocido', 0.0, -1))
                     
                     # Obtener posición del bounding box para mostrar el texto
                     x_coords = [lm.x * w for lm in landmarks]
@@ -534,17 +587,17 @@ try:
                         'landmarks': landmarks,
                         'score': hand_score
                     }
-                
-                # Extraer features de ambas manos
-                right_landmarks = hands_by_side.get('Right', {}).get('landmarks')
-                right_score = hands_by_side.get('Right', {}).get('score', 0.0)
-                left_landmarks = hands_by_side.get('Left', {}).get('landmarks')
-                left_score = hands_by_side.get('Left', {}).get('score', 0.0)
-                
-                features = build_features_for_both_hands(right_landmarks, right_score, left_landmarks, left_score)
-                
-                # Hacer una predicción con ambas manos
-                gesture_name, confidence, class_idx = predict_gesture(features)
+
+                hand_predictions = {}
+                for hand_side, hand_data in hands_by_side.items():
+                    features = build_features_for_hand(
+                        hand_data['landmarks'],
+                        hand_side=hand_side,
+                        hand_score=hand_data['score']
+                    )
+                    gesture_name, confidence, class_idx = predict_gesture(features)
+                    hand_predictions[hand_side] = (gesture_name, confidence, class_idx)
+                    log_prediction(current_timestamp, hand_side, gesture_name, float(confidence), int(class_idx))
                 
                 # Guardar datos esqueletales y predicción
                 save_skeletal_data(current_timestamp, 
@@ -552,13 +605,13 @@ try:
                                  right_score=hands_by_side.get('Right', {}).get('score', 0.0),
                                  left_landmarks=hands_by_side.get('Left', {}).get('landmarks'),
                                  left_score=hands_by_side.get('Left', {}).get('score', 0.0))
-                
-                log_prediction(current_timestamp, gesture_name, float(confidence), int(class_idx),
-                             'Right' in hands_by_side, 'Left' in hands_by_side)
-                
+
                 # Imprimir en consola cada 30 frames
                 if frame_count % 30 == 0:
-                    print(f"[Frame {frame_count}] {gesture_name}: {confidence:.3f}")
+                    preview = ' | '.join(
+                        [f"{side}:{pred[0]} ({pred[1]:.3f})" for side, pred in hand_predictions.items()]
+                    )
+                    print(f"[Frame {frame_count}] {preview}")
                 
                 # Guardar frame cada FRAMES_SAVE_INTERVAL frames
                 if frame_count % FRAMES_SAVE_INTERVAL == 0:
@@ -567,6 +620,7 @@ try:
                 # Dibujar resultados en todas las manos detectadas
                 for hand_side, hand_data in hands_by_side.items():
                     landmarks = hand_data['landmarks']
+                    gesture_name, confidence, _ = hand_predictions.get(hand_side, ('Desconocido', 0.0, -1))
                     
                     # Obtener posición del bounding box para mostrar el texto
                     x_coords = [lm.x * w for lm in landmarks]
